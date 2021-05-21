@@ -63,11 +63,60 @@ __功能维度__ 从业务功能维度划分，可以分为：基础监控、中
 
 通过为流行的平台提供一致的，富有表现力的，供应商中立的API，OpenTracing使开发人员可以轻松地通过配置更改，添加（或切换）跟踪系统的实现。OpenTracing还为OSS检测和特定于平台的跟踪帮助程序库提供了通用语言。
 
+#### 分布式追踪：一种思想模型
+
 大多数分布式追踪系统的思想模型都来自 Google's Dapper 论文， OpenTracing 也使用相似的术语
+
+Dapper的介绍可以看这个链接：
+[Dapper，大规模分布式系统的跟踪系统 by bigbully](http://bigbully.github.io/Dapper-translation/)
 
 ![监控术语](监控术语.png)
 
+* __Trace__ 事物在分布式系统中执行时的描述；
+* __Spans__ 表示工作流的一部分带有命名的、时间范围的操作跨度信息。Spans接受key:value标签以及附加到特定Span实例的细粒度、带时间戳的结构化日志；
+* __Span Contenxt__ 携带分布式事务的跟踪信息，包括当它通过网络或消息总线将服务传递给服务时。SPAN上下文包含Trace标识符、SPAN标识符和跟踪系统需要传播到下游服务的任何其他数据；
 
-###
+#### 现代软件系统四大件
+
+从应用程序分层角度看分布式跟踪系统，现代软件系统如下图所示：
+
+![现代软件系统](现代软件系统.png)
+
+现代软件系统中的组件可以分为三类：
+
+* 应用程序和业务逻辑：您的代码。
+* 广泛共享的库：其他人的代码。
+* 广泛共享的服务：其他人的基础架构。
+
+这三个组件具有不同的要求，并驱动着负责监视应用程序的分布式跟踪系统的设计。最终的设计产生基于四个重要方面：
+
+* 跟踪工具API：装饰应用程序代码的内容。
+* [有线协议](https://en.wikipedia.org/wiki/Wire_protocol)：在RPC请求中与应用程序数据一起发送的内容。
+* 数据协议：异步（[带外](https://baike.baidu.com/item/out-of-band/15801641?fr=aladdin)）发送到您的分析系统的内容。
+* 分析系统：用于处理跟踪数据的数据库和交互式UI。
 
 ## 典型实现
+
+1、Pinpoint  
+github地址：[GitHub - naver/pinpoint: Pinpoint is an open source APM (Application Performance Management) tool for large-scale distributed systems written in Java](https://link.zhihu.com/?target=https%3A//github.com/naver/pinpoint).  
+对java领域的性能分析有兴趣的朋友都应该看看这个开源项目，这个是一个韩国团队开源出来的，通过JavaAgent的机制来做字节码代码植入，实现加入traceid和抓取性能数据的目的。NewRelic、Oneapm之类的工具在java平台上的性能分析也是类似的机制。  
+
+2、SkyWalking  
+github地址：[wu-sheng/sky-walking](https://link.zhihu.com/?target=https%3A//github.com/wu-sheng/sky-walking)  
+这是国内一位叫吴晟的兄弟开源的，也是一个对JAVA分布式应用程序集群的业务运行情况进行追踪、告警和分析的系统，在github上也有400多颗星了。功能相对pinpoint还是稍弱一些，插件还没那么丰富，不过也很难得了。  
+
+3、Zipkin  
+官网：[OpenZipkin · A distributed tracing system](https://link.zhihu.com/?target=http%3A//zipkin.io/)  
+github地址：[GitHub - openzipkin/zipkin: Zipkin is a distributed tracing system](https://link.zhihu.com/?target=https%3A//github.com/openzipkin/zipkin)  
+这个是twitter开源出来的，也是参考Dapper的体系来做的。
+
+Zipkin的java应用端是通过一个叫Brave的组件来实现对应用内部的性能分析数据采集。
+
+Brave的github地址：[Brave-github](https://github.com/openzipkin/brave)  
+这个组件通过实现一系列的java拦截器，来做到对http/servlet请求、数据库访问的调用过程跟踪。然后通过在spring之类的配置文件里加入这些拦截器，完成对java应用的性能数据采集。
+
+4、CAT  
+github地址：[GitHub - dianping/cat: Central Application Tracking](https://link.zhihu.com/?target=https%3A//github.com/dianping/cat)  
+这个是大众点评开源出来的，实现的功能也还是蛮丰富的，国内也有一些公司在用了。不过他实现跟踪的手段，是要在代码里硬编码写一些“埋点”，也就是侵入式的。这样做有利有弊，好处是可以在自己需要的地方加埋点，比较有针对性；坏处是必须改动现有系统，很多开发团队不愿意。
+
+### [Apache Skywalking](https://skywalking.apache.org/)
