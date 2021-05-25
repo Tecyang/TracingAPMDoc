@@ -26,9 +26,9 @@ __数据维度__ 从数据类型划分，大体可以分为：
 
 * __日志（logs)__  用于记录离散的事件信息。例如，应用程序的调试信息或错误信息。它是我们诊断问题的依据。比如我们说的ELK就是基于Logging。  
 
-* __指标（Metrics)__  基于时间序列的数据点，通过聚合和计算后能反应出一些重要指标的趋势。例如，队列的当前深度可被定义为一个度量值，在元素入队或出队时被更新；HTTP 请求个数可被定义为一个计数器，新请求到来时进行累。prometheus专注于Metrics领域。
+* __指标或度量（Metrics)__  基于时间序列的数据点，通过聚合和计算后能反应出一些重要指标的趋势。例如，队列的当前深度可被定义为一个度量值，在元素入队或出队时被更新；HTTP 请求个数可被定义为一个计数器，新请求到来时进行累。prometheus专注于Metrics领域。
 
-* __调用链（Tracing）__ 调用链监控可以完整的呈现出一次请求的全部信息，包括服务调用链路、所耗时间等。如zipkin、skywalking等；
+* __调用链或追踪（Tracing）__ 调用链监控可以完整的呈现出一次请求的全部信息，包括服务调用链路、所耗时间等。如zipkin、skywalking等；
 
 __功能维度__ 从业务功能维度划分，可以分为：基础监控、中间件监控、业务监控
 
@@ -98,16 +98,16 @@ Dapper的介绍可以看这个链接：
 ## 典型实现
 
 1、Pinpoint  
-github地址：[GitHub - naver/pinpoint: Pinpoint is an open source APM (Application Performance Management) tool for large-scale distributed systems written in Java](https://link.zhihu.com/?target=https%3A//github.com/naver/pinpoint).  
+github地址：[GitHub - naver/pinpoint: Pinpoint is an open source APM (Application Performance Management) tool for large-scale distributed systems written in Java](https://github.com/naver/pinpoint).  
 对java领域的性能分析有兴趣的朋友都应该看看这个开源项目，这个是一个韩国团队开源出来的，通过JavaAgent的机制来做字节码代码植入，实现加入traceid和抓取性能数据的目的。NewRelic、Oneapm之类的工具在java平台上的性能分析也是类似的机制。  
 
 2、SkyWalking  
-github地址：[wu-sheng/sky-walking](https://link.zhihu.com/?target=https%3A//github.com/wu-sheng/sky-walking)  
-这是国内一位叫吴晟的兄弟开源的，也是一个对JAVA分布式应用程序集群的业务运行情况进行追踪、告警和分析的系统，在github上也有400多颗星了。功能相对pinpoint还是稍弱一些，插件还没那么丰富，不过也很难得了。  
+github地址：[wu-sheng/sky-walking](https://github.com/wu-sheng/sky-walking)  
+这是国内一位叫吴晟的工程师开源的，也是一个对JAVA分布式应用程序集群的业务运行情况进行追踪、告警和分析的系统，在github上也有16.9k关注了。功能已趋于完善，符合国人使用习惯。
 
 3、Zipkin  
 官网：[OpenZipkin · A distributed tracing system](https://link.zhihu.com/?target=http%3A//zipkin.io/)  
-github地址：[GitHub - openzipkin/zipkin: Zipkin is a distributed tracing system](https://link.zhihu.com/?target=https%3A//github.com/openzipkin/zipkin)  
+github地址：[GitHub - openzipkin/zipkin: Zipkin is a distributed tracing system](https://github.com/openzipkin/zipkin)  
 这个是twitter开源出来的，也是参考Dapper的体系来做的。
 
 Zipkin的java应用端是通过一个叫Brave的组件来实现对应用内部的性能分析数据采集。
@@ -116,7 +116,9 @@ Brave的github地址：[Brave-github](https://github.com/openzipkin/brave)
 这个组件通过实现一系列的java拦截器，来做到对http/servlet请求、数据库访问的调用过程跟踪。然后通过在spring之类的配置文件里加入这些拦截器，完成对java应用的性能数据采集。
 
 4、CAT  
-github地址：[GitHub - dianping/cat: Central Application Tracking](https://link.zhihu.com/?target=https%3A//github.com/dianping/cat)  
+github地址：[GitHub - dianping/cat: Central Application Tracking](https://github.com/dianping/cat)  
 这个是大众点评开源出来的，实现的功能也还是蛮丰富的，国内也有一些公司在用了。不过他实现跟踪的手段，是要在代码里硬编码写一些“埋点”，也就是侵入式的。这样做有利有弊，好处是可以在自己需要的地方加埋点，比较有针对性；坏处是必须改动现有系统，很多开发团队不愿意。
+
+目前不是很活跃
 
 ### [Apache Skywalking](https://skywalking.apache.org/)
