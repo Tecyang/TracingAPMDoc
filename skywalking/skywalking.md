@@ -10,17 +10,6 @@
 
 SkyWalking是一个开源APM系统，包括对Cloud Native体系结构中的分布式系统的监视，跟踪，诊断功能。  
 
-<p align="center">
-<br><br>
-<a target="_blank" rel="noopener noreferrer" href="https://camo.githubusercontent.com/72874858224f1be4f277d5e858c6cc63c785459927a4ab0c1dc63b7adeaea7b7/68747470733a2f2f6c616e6473636170652e636e63662e696f2f696d616765732f6c6566742d6c6f676f2e737667"><img src="https://camo.githubusercontent.com/72874858224f1be4f277d5e858c6cc63c785459927a4ab0c1dc63b7adeaea7b7/68747470733a2f2f6c616e6473636170652e636e63662e696f2f696d616765732f6c6566742d6c6f676f2e737667" width="150" data-canonical-src="https://landscape.cncf.io/images/left-logo.svg" style="max-width:100%;"></a>&nbsp;&nbsp;<a target="_blank" rel="noopener noreferrer" href="https://camo.githubusercontent.com/c5aee535d6f21df20c644791c2c999d670980166a9497e60b5bf2b496c902c6e/68747470733a2f2f6c616e6473636170652e636e63662e696f2f696d616765732f72696768742d6c6f676f2e737667"><img src="https://camo.githubusercontent.com/c5aee535d6f21df20c644791c2c999d670980166a9497e60b5bf2b496c902c6e/68747470733a2f2f6c616e6473636170652e636e63662e696f2f696d616765732f72696768742d6c6f676f2e737667" width="200" data-canonical-src="https://landscape.cncf.io/images/right-logo.svg" style="max-width:100%;"></a>
-<br><br>
-SkyWalking enriches the <a href="https://landscape.cncf.io/landscape=observability-and-analysis&amp;license=apache-license-2-0" rel="nofollow">CNCF CLOUD NATIVE Landscape.</a>
-</p>
-<p align="center">
-<a href="https://openapm.io" rel="nofollow"><img src="https://camo.githubusercontent.com/02aa4229ce58d03b31aec4963deb4375962d08a2e002681da1c5594884454d38/68747470733a2f2f6f70656e61706d2e696f2f7374617469632f6d656469612f6f70656e61706d5f6c6f676f2e737667" width="100" data-canonical-src="https://openapm.io/static/media/openapm_logo.svg" style="max-width:100%;"></a>
-  <br>Our project enriches the <a href="https://openapm.io" rel="nofollow">OpenAPM Landscape!</a>
-</p>
-
 核心功能如下:
 
 * 服务，服务实例，端点指标分析
@@ -491,9 +480,41 @@ Skywalking 收集了大量信息，基于默认提供UI进行功能介绍，主�
 
 ### 服务链路追踪功能
 
+![trace](06.png)
 
 ### 性能剖析
 
+![07](07.png)
+![08](08.png)
+![09](09.png)
 ### 日志
 
+![log](10.png)
+
 ### 告警
+
+![alarm](11.png)
+
+## skywalking 告警规则
+
+待补充
+
+### 默认告警规则
+
+待补充
+
+### 定制化告警规则
+
+待补充
+
+### 告警模板
+
+待补充
+
+### 接入钉钉
+
+待补充
+
+## skywalking 扩展
+
+待补充
