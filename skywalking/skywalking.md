@@ -346,7 +346,66 @@ cp -rf ./apm-es7-8.5.0/apache-skywalking-apm-bin-es7/* /home/produce/nas/skywalk
 
 ```
 
-### skywalking 报警模板
+## Skywalking 功能介绍
+
+Skywalking 收集了大量信息，基于默认提供UI进行功能介绍，主要分为如下几部分：
+
+* 仪表盘
+* 拓扑图
+* 服务链路追踪功能
+* 性能剖析
+* 日志
+* 告警
+
+### 仪表盘
+
+![仪表盘](仪表盘.png)
+<!-- ![仪表盘](01.png) -->
+![service](02.png)
+![instance](03.png)
+![Endpoint](04.png)
+
+### 拓扑图
+
+![拓扑图](05.png)
+
+### 服务链路追踪功能
+
+![trace](06.png)
+
+### 性能剖析
+
+![07](07.png)
+![08](08.png)
+![09](09.png)
+
+### 日志
+
+![log](10.png)
+
+### 告警
+
+![alarm](11.png)
+
+## skywalking 告警规则
+
+### 告警模块基本原理
+
+Skywalking 发送告警的基本原理是每隔一段时间轮询 skywalking-oap 收集到的链路追踪的数据，再根据所配置的告警规则（如服务响应时间、服务响应时间百分比）等，如果达到阈值则发送响应的告警信息。 发送告警信息是以线程池异步的方式调用 webhook 接口完成，（具体的webhook接口可以使用者自行定义），从而开发者可以在指定的webhook接口中自行编写各种告警方式，钉钉告警、邮件告警等等。告警的信息也可以在RocketBot即ui中查看到。
+
+目前对应 8.5.0 版本支持的告警接口如下：
+
+* 普通webhook
+* gRPCHook
+* Slack Chat Hook
+* WeChat Hook（微信告警）
+* Dingtalk Hook（钉钉告警）
+* Feishu Hook（飞书告警）
+
+### 默认告警规则
+
+告警的核心由一组规则驱动，这些规则定义在 安装解压缩包里面的config/alarm-settings.yml文件中, 打开之后如下所示：  
+rules 即为需要配置的告警规则的列表；规则名不能重复且必须以 '_rule' 为结尾.
 
 ``` yml
 
@@ -455,66 +514,129 @@ dingtalkHooks:
 #  - http://127.0.0.1/go-wechat/
 ```
 
-## Skywalking 功能介绍
+### 告警规则详解
 
-Skywalking 收集了大量信息，基于默认提供UI进行功能介绍，主要分为如下几部分：
+下面取默认的告警规则中的一条进行分析
 
-* 仪表盘
-* 拓扑图
-* 服务链路追踪功能
-* 性能剖析
-* 日志
-* 告警
+``` yml
+rules:
+  # Rule unique name, must be ended with `_rule`.
+  service_resp_time_rule:
+    metrics-name: service_resp_time
+    op: ">"
+    threshold: 1000
+    period: 10
+    count: 3
+    silence-period: 5
+    message: Response time of service {name} is more than 1000ms in 3 minutes of last 10 minutes.
+```
 
-### 仪表盘
+首先提示声明了告警规则名称应该具有唯一性，且必须以 _rule 结尾，这里是service_resp_time_rule（服务响应时间）
 
-![仪表盘](仪表盘.png)
-<!-- ![仪表盘](01.png) -->
-![service](02.png)
-![instance](03.png)
-![Endpoint](04.png)
+* metrics-name：告警指标，指标度量值为long、double或int类型
 
-### 拓扑图
+* op：度量值和阈值的比较方式，这里是大于
 
-![拓扑图](05.png)
+* threshold：阈值，这里是1000，毫秒为单位
 
-### 服务链路追踪功能
+* period：评估度量标准的时间长度，也就是告警检查周期，分钟为单位
 
-![trace](06.png)
+* count：累计达到多少次告警值后触发告警
 
-### 性能剖析
+* silence-period：忽略相同告警信息的周期，默认与告警检查周期一致。简单来说，就是在触发告警时开始计时N，在N+period时间内保持沉默silence不会再次触发告警，这和alertmanager的告警抑制类似
 
-![07](07.png)
-![08](08.png)
-![09](09.png)
-### 日志
+* message：告警消息主体，通过变量在发送消息时进行自动替换
 
-![log](10.png)
+除此之外，还有以下可选（高级）规则配置：
 
-### 告警
+* 排除或包含服务配置，默认匹配此指标中的所有服务
 
-![alarm](11.png)
+``` yml
+  service_percent_rule:
+    metrics-name: service_percent
+    include-names:
+      - service_a
+      - service_b
+    exclude-names:
+      - service_c
+```
 
-## skywalking 告警规则
+* 多种值情况的指标阈值，例如P50、P75、P90、P95、P99的阈值，主要表示样本的分布及其数量，例如P50表示取值周期内有50%的响应都大于1000ms，这和[prometheus聚合指标quantile](https://prometheus.io/docs/practices/histograms/#quantiles)是一样的，如果同时写表示都满足时触发
 
-待补充
+例如下面的规则表示在过去10分钟内，由于p50 > 1000、p75 > 1000、p90 > 1000、p95 > 1000、p99 > 1000多个条件，服务累计3次的响应时间百分比都大于1000ms，触发告警
 
-### 默认告警规则
+``` yml
+  service_resp_time_percentile_rule:
+    # Metrics value need to be long, double or int
+    metrics-name: service_percentile
+    op: ">"
+    threshold: 1000,1000,1000,1000,1000
+    period: 10
+    count: 3
+    silence-period: 5
+    message: Percentile response time of service {name} alarm in 3 minutes of last 10 minutes, due to more than one condition of p50 > 1000, p75 > 1000, p90 > 1000, p95 > 1000, p99 > 1000
+```
 
-待补充
+* 复合规则[composite-rules](https://github.com/apache/skywalking/blob/master/docs/en/setup/backend/backend-alarm.md#composite-rules)，针对相同实体级别而言的规则，例如服务级别的警报规则，同时满足指定的多个规则时触发
+
+``` yml
+rules:
+  endpoint_percent_rule:
+    # Metrics value need to be long, double or int
+    metrics-name: endpoint_percent
+...
+    # Specify if the rule can send notification or just as an condition of composite rule 仅作为复合规则的条件
+    only-as-condition: false
+  service_percent_rule:
+    metrics-name: service_percent
+...
+    only-as-condition: false
+  service_resp_time_percentile_rule:
+    # Metrics value need to be long, double or int
+    metrics-name: service_percentile
+...
+    only-as-condition: false
+  meter_service_status_code_rule:
+    metrics-name: meter_status_code
+...
+    only-as-condition: false
+composite-rules:
+  comp_rule:
+    # Must satisfied percent rule and resp time rule 
+    expression: service_percent_rule && service_resp_time_percentile_rule
+    message: Service {name} successful rate is less than 80% and P50 of response time is over 1000ms # 服务成功率小于80%，响应时间大于1000ms
+```
 
 ### 定制化告警规则
 
-待补充
+Skywalking的配置大部分内容是通过应用的application.yml及系统的环境变量设置的，同时也支持下面系统的动态配置来源
 
-### 告警模板
+* gRPC服务
+* Zookeeper
+* Etcd
+* Consul
+* Apollo
+* Nacos
+* k8s configmap
 
-待补充
+参考[Skywalking动态配置说明](https://github.com/apache/skywalking/blob/master/docs/en/setup/backend/dynamic-config.md)，如果开启了动态配置，可以通过键alarm.default.alarm-settings覆盖掉默认配置文件alarm-settings.yml
 
-### 接入钉钉
+我们当前配置方式是通过 docker swarm 部署，动态配置使用apollo：
+修改部署脚本，执行apollo参数信息且打开动态配置开关：
 
-待补充
+``` yml
 
-## skywalking 扩展
+...
+      # 动态配置中心设置 apollo
+      SW_CONFIGURATION: apollo
+      SW_CONFIG_APOLLO: http://apollo-configservice:8080
+      SW_CONFIG_APOLLO_CLUSTER: prod
+      SW_CONFIG_APOLLO_ENV: PRO
+      SW_CONFIG_APOLLO_APP_ID: skywalking
+      SW_CONFIG_APOLLO_PERIOD: 5
+...
+```
+
+### OAL
 
 待补充
