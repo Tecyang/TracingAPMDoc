@@ -607,6 +607,170 @@ composite-rules:
     message: Service {name} successful rate is less than 80% and P50 of response time is over 1000ms # 服务成功率小于80%，响应时间大于1000ms
 ```
 
+### 自定义报警信息转发
+
+基于我们当前报警信息数量较大，且不同业务报警缺乏定向提醒等现状，为了更好的帮助我们各个业务线相关人员进行负责服务的监控，需要去除其他业务线服务报警对于其的影响,现规划基于我们自定义规则的报警输出群来实现报警发送。
+
+skywalking 默认针对报警信息的发送只提供默认的通用接口实现，如发送钉钉、微信、飞书或者webhook等；对于根据报警内容进行报警信息定制化转发场景，官方建议通过实现 webhook 接口进行处理。
+
+[ISSUE](https://github.com/apache/skywalking/issues/7015)
+
+实现采用 `python flask` 框架，业务群组规则如下：
+
+``` python
+
+from Dao.GroupInfo import GroupInfo
+
+
+class ServiceGroup:
+
+    groups = []
+
+    def __init__(self):
+
+        # 财务
+        financeService = GroupInfo(
+            url='xxx',
+            services={'finance-service', 'file-service',
+                      'leading-callback-gateway'}
+        )
+        # 采购
+        purchaseService = GroupInfo(
+            url='xxx',
+            services={
+                'number-service',
+                'purchase-service',
+                'supplier-service'
+            }
+        )
+
+        # 供应商对接
+        mallService = GroupInfo(
+            url='xxx',
+            services={
+                'location-service',
+                'workflow-service',
+                'leading-openapi-gateway',
+                'mall-api-service',
+                'mall-release-service',
+                'supplier-api-service',
+                'supplier-release-service',
+            }
+        )
+        # WMS
+        wmsService = GroupInfo(
+            url='xxx',
+            services={
+                'warehouse-service',
+                'warehouse-mobile-api-service',
+                'service-api-service',
+            }
+        )
+        # 数据
+        dataService = GroupInfo(
+            url='xxx',
+            services={
+                'data-sync-service',
+                'leading-sync-elasticsearch',
+                'data-extract-service',
+                'data-task-service',
+                'report-api-service',
+            }
+        )
+        # 搜索
+        searchService = GroupInfo(
+            url='xxx',
+            services={
+                'search-service',
+                'elasticsearch-service',
+                'search-query-planner-service',
+            }
+        )
+        # 官网
+        mainSiteService = GroupInfo(
+            url='xxx',
+            services={
+                'payment-service',
+                'shopping-cart-service',
+                'logistics-service',
+                'statistics-service',
+                'mainsite-api-service',
+                'mainsite-release-service',
+                'shoppe-api-service',
+                'shoppe-release-service',
+                'bm-api-gateway',
+                'bm-order-service',
+                'bm-product-service',
+                'bm-user-service',
+                'bm-supplier-service',
+            }
+        )
+        # 订单
+        orderService = GroupInfo(
+            url='xxx',
+            services={
+                'setting-service',
+                'order-service',
+            }
+        )
+        # 用户
+        userService = GroupInfo(
+            url='xxx',
+            services={
+                'authorization-server',
+                'user-service',
+                'customer-service',
+                'marketing-service',
+                'branch-service',
+            }
+        )
+        # 商品
+        productService = GroupInfo(
+            url='xxx',
+            services={
+                'notice-service',
+                'product-service',
+                'erp-old-service',
+                'mapping-service',
+                'brand-authorization-service'
+            }
+        )
+        ...
+
+```
+
+核心转发规则如下:
+
+``` python
+def sendRule(data):
+    urls = []
+    # 服务分组信息
+    serviceGroup = ServiceGroup()
+    # 端点信息报警两个服务所属群组均发送
+    if data['scope'] == 'ENDPOINT_RELATION':
+        pattern = re.compile(r'in (.*?) to.*in (.*?)$')
+        service = pattern.findall(data['name'])
+        urls = serviceGroup.getUrlByService(service)
+    # 服务实例报警规则
+    elif data['scope'] == 'SERVICE_INSTANCE':
+        pattern = re.compile(r'of (.*?)$')
+        service = pattern.findall(data['name'])
+        urls = serviceGroup.getUrlByService(service)
+    # 服务报警信息直接发送到对应群组
+    elif data['scope'] == 'SERVICE':
+        urls = serviceGroup.getUrlByService(data['name'])
+    else:
+        # 其他未定义转发规则（如数据库、es、mq、redis、mongodb等）发送到默认群组，后续扩展其规则
+        urls.append(serviceGroup.getDefaultGroup(app.debug).url)
+
+    # 转发规则未获取到(服务未配置群组或群组未配置url）发送群url，发送到默认报警群组
+    if len(urls) == 0:
+        urls.append(serviceGroup.getDefaultGroup(app.debug).url)
+    # 同一条消息同一个群发一遍
+    return list(set(urls))
+
+```
+
 ### 定制化告警规则
 
 Skywalking的配置大部分内容是通过应用的application.yml及系统的环境变量设置的，同时也支持下面系统的动态配置来源
